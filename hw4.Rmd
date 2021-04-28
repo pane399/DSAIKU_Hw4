@@ -1,0 +1,100 @@
+---
+title: "Hw4"
+author: "Jeong Hoon Yun"
+date: "2021 4 23"
+output:
+  word_document: default
+  pdf_document:
+    latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, results='hide', message=FALSE}
+packages <- c('knitr', 'HistData', 'tidyverse', 'magrittr', 'grid', 'gridExtra', 'ggplot2')
+install.packages(packages)
+install.packages("plyr")
+install.packages("plotrix")
+
+library(plotrix)
+library(plyr)
+library(knitr)
+library(HistData)
+library(tidyverse)
+library(magrittr)
+library(grid)
+library(gridExtra)
+library(ggplot2)
+
+```
+
+```{r}
+avg_score <- read.csv("avg_score.csv")
+kable(avg_score)
+class(avg_score)
+
+avg_score_general <- read_csv("avg_score_general.csv")
+kable(avg_score_general)
+class(avg_score_general)
+
+major_score <- avg_score %>% # 전공과목 성적, 학생수 추출
+  as_tibble %>%
+  select(c(26, 27))
+head(major_score)
+kable(major_score)
+
+general_score <- avg_score %>% # 교양과목 성적, 학생수 추출
+  as.tibble %>%
+  select(c(26, 27))
+head(general_score)
+kable(general_score)
+
+major_score <- ddply(avg_score,.(성적점수구분), summarize, 학생수 = sum(학생수)) # 중복 행 합치기
+general_score <- ddply(avg_score_general,.(성적점수구분), summarize, 학생수 = sum(학생수))
+
+str(major_score)
+str(general_score)
+
+colnames(major_score) = c("Score", "Students") # 열 이름 변경
+colnames(general_score) = c("Score", "Students")
+
+graph1 <- ggplot(data = major_score,
+       aes(x = Score, y = Students, fill=Score))+
+  geom_bar(width = 1, stat = 'identity') +
+  theme(plot.title = element_text(hjust = 0.5, family="sans"),
+        axis.text.x = element_text(angle = 45, hjust = 1, family="sans"),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_text(angle = 30, hjust = 1, family="sans"),
+        legend.position = c(0.8, 0.6),
+        legend.key.size = unit(0.4, 'cm')) +
+  labs(title = 'The number of students per scores of major courses')+
+  scale_x_discrete(limits = c("A+", "A", "B+", "B", "C+", "C", "D+", "D", "F"))+
+  scale_fill_manual(limits = c("A+", "A", "B+", "B", "C+", "C", "D+", "D", "F"), 
+                    values = c("#E57373", "#FB8C00", "#FFF59D", "#C5E1A5", "#4DB6AC", 
+                               "#4FC3F7", "#3949AB", "#8E24AA", "#424242"))
+graph1
+
+graph2 <- ggplot(data = general_score,
+       aes(x = Score, y = Students, fill=Score))+
+  geom_bar(width = 1, stat = 'identity') +
+  theme(plot.title = element_text(hjust = 0.5, family="sans"),
+        axis.text.x = element_text(angle = 45, hjust = 1, family="sans"),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_text(angle = 30, hjust = 1, family="sans"),
+        legend.position = c(0.8, 0.6),
+        legend.key.size = unit(0.4, 'cm')) +
+  labs(title = 'The number of students per scores of general courses')+
+  scale_x_discrete(limits = c("A+", "A", "B+", "B", "C+", "C", "D+", "D", "F"))+
+  scale_fill_manual(limits = c("A+", "A", "B+", "B", "C+", "C", "D+", "D", "F"),
+                      values = c("#C2185B", "#FFA726", "#FFECB3", "#E6EE9C", "#B2DFDB", 
+                               "#0097A7", "#9FA8DA", "#E1BEE7", "#4E342E"))
+graph2
+
+pdf("Hw4.pdf")
+Hw4<-grid.arrange(graph1, graph2, nrow = 2)
+Hw4
+dev.off()
+```
